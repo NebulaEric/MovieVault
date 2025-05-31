@@ -18,7 +18,7 @@ function createWindow() {
         win.loadURL('http://localhost:5173');
     }
     else {
-        win.loadFile(path_1.default.join(__dirname, '../movievault/index.html'));
+        win.loadFile(path_1.default.join(__dirname, '../index.html'));
     }
 }
 electron_1.app.whenReady().then(() => {

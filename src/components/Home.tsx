@@ -1,13 +1,13 @@
 import React from "react"
 import reactLogo from '/src/assets/react.svg'
 import viteLogo from '/vite.svg'
-import './Layout.css'
+import './Home.css'
 import { useState } from 'react'
 import { Outlet } from "react-router-dom"
 
-export const Layout: React.FC = () => {
+export const Home: React.FC = () => {
     const [count, setCount] = useState(0)
-    return <div>
+    return <>
         <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -31,6 +31,7 @@ export const Layout: React.FC = () => {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      
     <Outlet />
-    </div>
+    </>
 }
