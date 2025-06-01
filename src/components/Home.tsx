@@ -10,48 +10,41 @@ export const Home: React.FC = () => {
     const [count, setCount] = useState(0)
     return <>
         <header>
-        <nav>
+          <nav>
             <div className="container nav">
-                <a className="logo" href="index.html"><img src={profileLogo} alt="logo"/>Eric's Projects</a>
+              <a className="profileLogo" href="index.html"><img src={profileLogo} alt="logo"/>Eric's Projects</a>
 
-                <button className="hamburger">☰</button>
-
-  {/* <!-- Navigation Links --> */}
-                <div className="navLinks">
-                    <a className="button" href="#hello">update</a>
-                    <a className="button" href="#about">About</a>
-                    <a className="button" href="#education">Education</a>
-                    <a className="button" href="#project">Projects</a>
-                    <a className="button" href="#contact">Contact</a>
-                </div>
-            
+               <button className="hamburger">☰</button>
+              {/* <!-- Navigation Links --> */}
+              <div className="navLinks">
+                <a className="button" href="#hello">update</a>
+                <a className="button" href="#about">About</a>
+                <a className="button" href="#education">Education</a>
+                <a className="button" href="#project">Projects</a>
+                <a className="button" href="#contact">Contact</a>
+              </div>
             </div>
-        </nav>
-      </header>
-        <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <button onClick={() => setCount((count) => 0)}>
-          Reset Count
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR and the routes
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      
-    <Outlet />
-    </>
+          </nav>
+        </header>
+
+        <main>
+          <div>
+            <a href="https://vite.dev" target="_blank">
+              <img src={viteLogo} className="logo" alt="Vite logo" />
+            </a>
+            <a href="https://react.dev" target="_blank">
+              <img src={reactLogo} className="logo react" alt="React logo" />
+            </a>
+          </div>
+          <h1>Vite + React</h1>
+          <div className="card">
+            <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
+            <button onClick={() => setCount((_count) => 0)}>Reset Count</button>
+            <p>Edit <code>src/App.tsx</code> and save to test HMR and the routes</p>
+          </div>
+          <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
+          <p className="needscroll">Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus</p>
+        </main>
+        <Outlet />
+     </>
 }
