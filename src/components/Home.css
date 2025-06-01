@@ -1,6 +1,6 @@
 #root {
   max-width: 1280px;
-  margin: 0 auto;
+  margin: 0 0;
   padding: 2rem;
   text-align: center;
 }
@@ -40,3 +40,74 @@
 .read-the-docs {
   color: #888;
 }
+
+
+header {
+    /* background-color: #18191b; */
+    padding: 10px 0;
+    position: fixed; /* Sticky header */
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    transition: top 0.3s ease;
+}
+
+/* Navigation Bar ----------------------------------------------------------------------------------*/
+nav {
+    
+    width: 100%;
+    justify-content: flex-end;
+    
+}
+.container.nav{
+    padding: 0 2rem;
+}
+.navLinks {
+  display: flex;
+  gap: .1rem;
+}
+
+.hamburger {
+  display: none; /* Hide hamburger by default */
+}
+
+nav a.logo{
+    font-family: 'Lato';
+    text-decoration: none;
+    color: white;
+    /* background-color: #18191b; */
+    margin-right: auto;
+    border-radius: .25rem;
+    display: inline-flex;
+    align-items: center;
+    font-size: 2.25rem;
+    transition: background-color 0.3s ease;
+}
+
+nav a.logo img {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-right: .7rem;
+}
+
+nav a.button{
+    font-family: 'Poppins'; /*PT Sans , Roboto , Lato*/
+    text-decoration: none;
+    color: white;
+    /* background-color: #18191b; */
+    padding: 10px 20px;
+    margin: 0 5px;
+    border-radius: .5rem;
+    display: inline-block;
+    font-size: 1.7rem;
+    transition: background-color 0.3s ease;
+}
+nav a.button:hover{
+    background-color: #555;
+}
+nav a.button.active{
+    background-color: #77005d;
+}
+
+/* End of Navigation Bar ------------------------------------------------------------------------*/
