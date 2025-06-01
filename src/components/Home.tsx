@@ -5,16 +5,16 @@ import profileLogo from '/src/assets/EW.png'
 import './Home.css'
 import { useState } from 'react'
 import { Outlet } from "react-router-dom"
+import  Modal  from './Modal';
 
 export const Home: React.FC = () => {
     const [count, setCount] = useState(0)
+    const [isModalOpen, setIsModalOpen] = useState(false);
     return <>
         <header>
           <nav>
             <div className="container nav">
               <a className="profileLogo" href="index.html"><img src={profileLogo} alt="logo"/>Eric's Projects</a>
-
-               <button className="hamburger">☰</button>
               {/* <!-- Navigation Links --> */}
               <div className="navLinks">
                 <a className="button" href="#hello">update</a>
@@ -29,6 +29,24 @@ export const Home: React.FC = () => {
 
         <main>
           <div>
+            <button className = "addMovie" onClick={() => setIsModalOpen(true)}>Add Movie</button>
+
+            <div className="movieCardSection">
+              <div className="movieCard">
+                <div className="movieCardImg"><img src="/src/assets/DUNGEONS_DRAGONS.webp" alt="" />
+
+                </div>
+                <div className="movieCardBody">
+                  <p className="movieName">Dungeons & Dragons</p>
+                </div>
+                
+              </div>
+            </div>
+
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+            <h2>Movie Info</h2>
+            <p>This is a pop-up modal over the app screen.</p>
+            </Modal>
             <a href="https://vite.dev" target="_blank">
               <img src={viteLogo} className="logo" alt="Vite logo" />
             </a>
@@ -37,7 +55,7 @@ export const Home: React.FC = () => {
             </a>
           </div>
           <h1>Vite + React</h1>
-          <div className="card">
+          <div className="testButtons">
             <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
             <button onClick={() => setCount((_count) => 0)}>Reset Count</button>
             <p>Edit <code>src/App.tsx</code> and save to test HMR and the routes</p>
