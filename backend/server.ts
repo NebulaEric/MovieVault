@@ -16,7 +16,8 @@ app.post('/api/movies', (req: Request, res: Response) => {
   const { title, year } = req.body;
 
   if (!title || !year) {
-    return res.status(400).json({ success: false, message: 'Missing title or year' });
+    res.status(400).json({ success: false, message: 'Missing title or year' });
+    return;
   }
 
   const stmt = datab.prepare('INSERT INTO movies (title, year) VALUES (?, ?)');
@@ -24,8 +25,10 @@ app.post('/api/movies', (req: Request, res: Response) => {
   if (err) {
     console.error(err.message);
     return res.status(500).json({ success: false });
+    
   }
-  return res.json({ success: true, id: this.lastID });
+   return res.json({ success: true, id: this.lastID });
+   
 });
 });
 
@@ -41,5 +44,5 @@ app.get('/api/movies', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log('Server is running at http://localhost:${PORT}');
+  console.log(`Server is running at http://localhost:${PORT}`);
 });

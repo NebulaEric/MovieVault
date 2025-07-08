@@ -6,6 +6,7 @@ import './Home.css'
 import { useState } from 'react'
 import { Outlet } from "react-router-dom"
 import  Modal  from './Modal';
+import AddMovieForm from '../components/AddMovieForm';
 
 export const Home: React.FC = () => {
     const [count, setCount] = useState(0)
@@ -45,6 +46,7 @@ export const Home: React.FC = () => {
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
             <h2>Movie Info</h2>
+            <AddMovieForm onClose={() => setIsModalOpen(false)} />
             <p>This is a pop-up modal over the app screen.</p>
             </Modal>
             <a href="https://vite.dev" target="_blank">

@@ -11,19 +11,34 @@ if (!fs.existsSync(dbPath)) {
 }
 
 // Create or open the database
-const db = new sqlite3.Database(path.join(dbPath, 'movies.db'), (err) => {
-  if (err) console.error('Error opening database:', err.message);
-  else console.log('✅ Connected to SQLite database.');
+export const datab = new sqlite3.Database('./movies.db', (err) => {
+  if (err) {
+    console.error('Error opening database', err.message);
+  } else {
+    console.log('✅ Connected to SQLite database.');
+
+    datab.run(`
+      CREATE TABLE IF NOT EXISTS movies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        year INTEGER NOT NULL
+      )
+    `, (err) => {
+      if (err) {
+        console.error('❌ Error creating movies table', err.message);
+      } else {
+        console.log('📁 Movies table is ready.');
+      }
+    });
+  }
 });
 
-export const datab = new sqlite3.Database('./movies.db');
-
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS movies (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      year INTEGER NOT NULL
-    )
-  `);
-});
+// datab.serialize(() => {
+//   datab.run(`
+//     CREATE TABLE IF NOT EXISTS movies (
+//       id INTEGER PRIMARY KEY AUTOINCREMENT,
+//       title TEXT NOT NULL,
+//       year INTEGER NOT NULL
+//     )
+//   `);
+// });
