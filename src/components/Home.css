@@ -45,7 +45,7 @@ nav a.profileLogo{
     font-family: 'Lato';
     text-decoration: none;
     color: white;
-    margin-right: auto;
+    /* margin-right: auto; */
     border-radius: .25rem;
     display: inline-flex;
     align-items: center;
@@ -72,6 +72,29 @@ nav a.button:hover{
     background-color: #555;
 }
 nav a.button.active{
+    background-color: #77005d;
+}
+
+nav a.searchButton{
+  font-family: 'Poppins'; /*PT Sans , Roboto , Lato*/
+    text-decoration: none;
+    color: white;
+    padding: 10px 20px;
+    /* margin: 0 5px 0 20px; */
+    border-radius: .5rem;
+    display: inline-flex;
+    font-size: 1.7rem;
+    align-items: center;
+    transition: background-color 0.3s ease;
+    margin-left: auto;
+    gap: .5rem;
+}
+
+nav a.searchButton:hover{
+    background-color: #555;
+    cursor:pointer;
+}
+nav a.searchButton.active{
     background-color: #77005d;
 }
 

@@ -6,7 +6,7 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "concurrently -k -n \"VITE,ELECTRON,TSC,EXPRESS\" -c \"cyan,green,magenta,yellow\" \"vite\" \"npm:electron-dev\" \"npm:tsc-watch\" \"npm:express-dev\"",
-    "tsc-watch": "tsc --project electron/tsconfig.json --watch",
+    "tsc-watch": "tsc --project backend/tsconfig.json --watch",
     "electron-dev": "wait-on http://localhost:5173 && electron .",
     "build": "vite build && tsc -p electron/tsconfig.json",
     "lint": "eslint .",
@@ -14,9 +14,18 @@
     "express-dev": "nodemon dist-backend/server.js"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "axios": "^1.10.0",
+    "better-sqlite3": "^12.2.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
     "electronmon": "^2.0.3",
     "express": "^5.1.0",
+    "lodash.debounce": "^4.0.8",
     "nodemon": "^3.1.10",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -25,8 +34,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^22.15.29",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
