@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import './MovieSearchInput.module.css';
+import '@/styles/MovieSearchInput.module.css';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 

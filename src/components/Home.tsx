@@ -2,13 +2,14 @@ import React from "react"
 import reactLogo from '/src/assets/react.svg'
 import viteLogo from '/vite.svg'
 import profileLogo from '/src/assets/EW.png'
-import './Home.css'
+import '@/styles/Home.css'
 import { useState, useEffect } from 'react'
 import { Outlet } from "react-router-dom"
 import  Modal  from './Modal';
 import AddMovieForm from '../components/AddMovieForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+import { Link } from 'react-router-dom';
 
 // const [title, setTitle] = useState('');
 // const [year, setYear] = useState('');
@@ -21,6 +22,7 @@ interface Movie {
   poster: string;
   id: number;
   year: number;
+  tmdb_id: number;
 }
 
 export const Home: React.FC = () => {
@@ -74,18 +76,31 @@ export const Home: React.FC = () => {
 
             <div className="movieCardSection">
               {movies.map((movie) => (
-                <div className="movieCard" key={movie.id}>
+                <Link
+                  to={{
+                    pathname: `/library/${movie.id}`,
+                    // state: { movie }, // optional: pass movie data
+                  }}
+                  key={movie.id}
+                  className="movieCard"
+                >
                   <div className="movieCardImg">
-                    {/* You can add poster logic here later */}
-                    <img src={movie.poster ? `${movie.poster}` : '/DUNGEONS_DRAGONS.webp'} alt={movie.title} />
+                    <img src={movie.poster ? `${movie.poster}` : '/NoPoster.png'} alt={movie.title} />
                   </div>
                   <div className="movieCardBody">
                     <p className="movieName">{movie.title} ({movie.year})</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-
+              {/* <a href = "" className="movieCard" key={movie.id}>
+                  <div className="movieCardImg">
+                    <img src={movie.poster ? `${movie.poster}` : '/NoPoster.png'} alt={movie.title} />
+                  </div>
+                  <div className="movieCardBody">
+                    <p className="movieName">{movie.title} ({movie.year})</p>
+                  </div>
+                </a> */}
             
             {/* <a href="https://vite.dev" target="_blank">
               <img src={viteLogo} className="logo" alt="Vite logo" />

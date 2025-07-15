@@ -40,8 +40,8 @@ app.use('/posters', express.static(path.join(process.cwd(), 'public', 'posters')
 
 
 app.post('/api/movies', async (req: Request, res: Response): Promise<void> => {
-  const { title, year } = req.body;
-
+  const { tmdb_id, title, year, poster, overview } = req.body;
+  const newYear = Number(year);
   if (!title || !year) {
     res.status(400).json({ success: false, message: 'Missing title or year' });
     return;
@@ -51,23 +51,30 @@ app.post('/api/movies', async (req: Request, res: Response): Promise<void> => {
     // Search TMDb
     // const results = await searchMovie(title);
     // const movie = results[0]; // First match
-    const movie = await searchMovie(title);
+    //const movie = await searchMovie(title);
 
     // const posterPath = movie?.poster_path || '';
     // const overview = movie?.overview || '';
 
     const stmt = datab.prepare(
-      'INSERT INTO movies (title, year, poster, overview) VALUES (?, ?, ?, ?)'
+      'INSERT INTO movies (tmdb_id, title, year, poster, overview) VALUES (?, ?, ?, ?, ?)'
     );
-
-    stmt.run(movie.title, year, movie.poster, movie.overview, function (this: sqlite3.RunResult, err: Error | null) {
-      if (err) {
-        console.error(err.message);
-        res.status(500).json({ success: false });
-      } else {
-        res.json({ success: true, id: this.lastID });
-      }
-    });
+//     console.log('Insert values:', {
+//   title,
+//   year,
+//   poster,
+//   overview,
+//   newYear,
+//   types: {
+//     title: typeof title,
+//     year: typeof year,
+//     poster: typeof poster,
+//     overview: typeof overview,
+//     newYear: typeof newYear,
+//   },
+// });
+    const info = stmt.run(tmdb_id, title, Number(year), poster, overview);
+    res.json({ success: true, id: info.lastInsertRowid });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'TMDb lookup failed' });
@@ -149,8 +156,8 @@ app.get('/api/tmdb/search', async (req: Request, res: Response): Promise<void> =
 app.get('/api/search-movies', async (req: Request, res: Response): Promise<void> => {
   const query = req.query.q as string;
   const source = req.query.source as 'tmdb' | 'local';
-
-  if (!query) {
+  const id = req.query.id as string;
+  if (!query && !id) {
     res.status(400).json({ results: [] });
     return;
   }
@@ -161,8 +168,9 @@ app.get('/api/search-movies', async (req: Request, res: Response): Promise<void>
     if (source === 'tmdb') {
       results = await searchMovieSuggestions(query); // ✅ new function here
     } else {
-      const rows = datab.prepare('SELECT * FROM movies WHERE title LIKE ?').all(`%${query}%`);
+      const rows = datab.prepare('SELECT * FROM movies WHERE id = ?').all(`${id}`);
       results = rows;
+      // console.log(results);
     }
 
     res.json({ results });
@@ -186,11 +194,13 @@ app.get('/api/preview-movie', async (req: Request, res: Response): Promise<void>
     });
 
     const movie = response.data;
-    console.log(movie);
+    // console.log(movie); // THIS IS WHERE I CONSOLE MOVIE +++++++++++++++++++++++++++++++++++++++++++++
+    // console.log("This is the id it is sending to the api: ", id, " versus movie.id: ", movie.id);
     const localPosterPath = await downloadPoster(movie.poster_path, movie.id);
 
     res.json({
       id: movie.id,
+      tmdb_id: id,
       title: movie.title,
       year: movie.release_date?.substring(0, 4),
       overview: movie.overview,
@@ -202,6 +212,46 @@ app.get('/api/preview-movie', async (req: Request, res: Response): Promise<void>
   }
 });
 
+app.get('/api/reviews', async (req: Request, res: Response): Promise<void> => {
+  const id = req.query.movieId as string;
+
+  if (!id) {
+    res.status(400).json({ error: 'Missing movie ID' });
+    return;
+  }
+  
+  try {
+    let results: any[] = [];
+    const rows = datab.prepare('SELECT * FROM reviews WHERE movie_id = ?').all(`${id}`);
+    results = rows;
+    res.json({ success: true, results });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Missing Reviews' });
+  }
+
+
+});
+
+app.post('/api/reviews', async (req: Request, res: Response): Promise<void> => {
+  console.log("WE IN HERE");
+  const { comment, movieId, profileId, rating  } = req.body;
+  if (!movieId) {
+    res.status(400).json({ success: false, message: 'Missing MovieId' });
+    return;
+  }
+  
+  try {
+    const stmt = datab.prepare(
+      'INSERT INTO reviews (movie_id, profile_id, rating, comment) VALUES (?, ?, ?, ?)'
+    );
+    const info = stmt.run(movieId, profileId, rating, comment);
+    res.json({ success: true, id: info.lastInsertRowid });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to add review' });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);

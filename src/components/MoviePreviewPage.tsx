@@ -1,6 +1,9 @@
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import profileLogo from '/src/assets/EW.png'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import '@/styles/MoviePreviewPage.module.css'
 
 interface Movie {
   id: number;
@@ -55,7 +58,33 @@ export default function MoviePreviewPage() {
             <h2 className="text-2xl font-bold mt-2">{movie.title} ({movie.year})</h2>
             <p className="mt-2">{movie.overview}</p>
 
-            <button className="mt-4 bg-green-600 text-white p-2 rounded">
+            <button className="mt-4 bg-green-600 text-white p-2 rounded"
+            onClick={async () => {
+    if (!movie) return;
+
+    try {
+      const res = await fetch('/api/movies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tmdb_id: movie.id,
+          title: movie.title,
+          year: movie.year,
+          poster: movie.poster,
+          overview: movie.overview,
+        }),
+      });
+
+      if (res.ok) {
+        alert('🎉 Movie added to your library!');
+      } else {
+        alert('❌ Failed to add movie.');
+      }
+    } catch (err) {
+      console.error('Failed to add movie:', err);
+      alert('⚠️ Error adding movie');
+    }
+  }}>
                 Add to My Library
             </button>
         </div>

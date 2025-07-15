@@ -1,54 +1,9 @@
 "use strict";
-// // db.ts
-// import sqlite3 from 'sqlite3';
-// import path from 'path';
-// import fs from 'fs';
-// // import { open } from 'sqlite';
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.datab = void 0;
-// // Ensure 'data' directory exists
-// const dataDir = path.resolve(__dirname, '../data');
-// if (!fs.existsSync(dataDir)) {
-//   fs.mkdirSync(dataDir);
-// }
-// const dbPath = path.resolve(__dirname, '../data/movies.db');
-// // Create or open the database
-// export const datab = new sqlite3.Database(dbPath, (err) => {
-//   if (err) {
-//     console.error('Error opening database', err.message);
-//   } else {
-//     console.log('✅ Connected to SQLite database.');
-//     datab.run(`
-//       CREATE TABLE IF NOT EXISTS movies (
-//         id INTEGER PRIMARY KEY AUTOINCREMENT,
-//         title TEXT NOT NULL,
-//         year INTEGER NOT NULL,
-//         poster TEXT,
-//         overview TEXT
-//       )
-//       `,
-//       (err) => {
-//         if (err) {
-//           console.error('❌ Error creating movies table', err.message);
-//         } else {
-//           console.log('📁 Movies table is ready.');
-//         }
-//       });
-//       console.log('After table making');
-//   }
-// });
-// datab.serialize(() => {
-//   datab.run(`
-//     CREATE TABLE IF NOT EXISTS movies (
-//       id INTEGER PRIMARY KEY AUTOINCREMENT,
-//       title TEXT NOT NULL,
-//       year INTEGER NOT NULL
-//     )
-//   `);
-// });
 // db.ts
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const path_1 = __importDefault(require("path"));
@@ -64,9 +19,32 @@ exports.datab = new better_sqlite3_1.default(dbPath);
 exports.datab.exec(`
   CREATE TABLE IF NOT EXISTS movies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tmdb_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     year INTEGER NOT NULL,
     poster TEXT,
     overview TEXT
-  )
+  );
+
+  CREATE TABLE IF NOT EXISTS profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    avatar TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    movie_id INTEGER NOT NULL,
+    profile_id INTEGER NOT NULL,
+    rating INTEGER NOT NULL CHECK(rating >= 0 AND rating <= 10),
+    comment TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
+    FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+  );
 `);
+const existingProfiles = exports.datab.prepare('SELECT COUNT(*) as count FROM profiles').get();
+if (existingProfiles.count === 0) {
+    exports.datab.prepare('INSERT INTO profiles (name) VALUES (?)').run('Test User');
+    console.log('👤 Inserted mock profile: "Test User"');
+}
