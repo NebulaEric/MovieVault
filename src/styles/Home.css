@@ -28,7 +28,7 @@ header {
 }
 
 /* Navigation Bar ----------------------------------------------------------------------------------*/
-nav {
+/* nav {
     Width: 100%;
     justify-content: flex-end;
 }
@@ -45,7 +45,6 @@ nav a.profileLogo{
     font-family: 'Lato';
     text-decoration: none;
     color: white;
-    /* margin-right: auto; */
     border-radius: .25rem;
     display: inline-flex;
     align-items: center;
@@ -58,7 +57,7 @@ nav a.profileLogo img {
     margin-right: .7rem;
 }
 nav a.button{
-    font-family: 'Poppins'; /*PT Sans , Roboto , Lato*/
+    font-family: 'Poppins'; /*PT Sans , Roboto , Lato
     text-decoration: none;
     color: white;
     padding: 10px 20px;
@@ -73,14 +72,13 @@ nav a.button:hover{
 }
 nav a.button.active{
     background-color: #77005d;
-}
+} */
 
-nav a.searchButton{
-  font-family: 'Poppins'; /*PT Sans , Roboto , Lato*/
+/* nav a.searchButton{
+  font-family: 'Poppins'; /*PT Sans , Roboto , Lato
     text-decoration: none;
     color: white;
     padding: 10px 20px;
-    /* margin: 0 5px 0 20px; */
     border-radius: .5rem;
     display: inline-flex;
     font-size: 1.7rem;
@@ -88,7 +86,7 @@ nav a.searchButton{
     transition: background-color 0.3s ease;
     margin-left: auto;
     gap: .5rem;
-}
+} */
 
 nav a.searchButton:hover{
     background-color: #555;

@@ -1,10 +1,8 @@
-// backend/server.ts
 import express from 'express';
 import type { Request, Response } from 'express';
 import cors from 'cors';
-import { datab } from './db';
-import sqlite3 from 'sqlite3';
-import { searchMovie, searchMovieSuggestions, downloadPoster } from './tmdb';
+import { datab } from './db.js';
+import { searchMovie, searchMovieSuggestions } from './tmdb.js';
 import path from 'path';
 import axios from 'axios';
 
@@ -17,81 +15,46 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 app.use('/posters', express.static(path.join(process.cwd(), 'public', 'posters')));
-// Add a movie
-// app.post('/api/movies', (req: Request, res: Response) => {
-//   const { title, year } = req.body;
 
-//   if (!title || !year) {
-//     res.status(400).json({ success: false, message: 'Missing title or year' });
-//     return;
-//   }
-
-//   const stmt = datab.prepare('INSERT INTO movies (title, year) VALUES (?, ?)');
-//   stmt.run(title, year, function (this: sqlite3.RunResult, err: Error | null) {
-//   if (err) {
-//     console.error(err.message);
-//     return res.status(500).json({ success: false });
-    
-//   }
-//    return res.json({ success: true, id: this.lastID });
-   
-// });
-// });
-
-
+//Post Movie to local database
 app.post('/api/movies', async (req: Request, res: Response): Promise<void> => {
   const { tmdb_id, title, year, poster, overview } = req.body;
-  const newYear = Number(year);
-  if (!title || !year) {
-    res.status(400).json({ success: false, message: 'Missing title or year' });
+  
+  if (!title) {
+    res.status(400).json({ success: false, message: 'Missing Movie Data' });
     return;
   }
 
   try {
-    // Search TMDb
-    // const results = await searchMovie(title);
-    // const movie = results[0]; // First match
-    //const movie = await searchMovie(title);
-
-    // const posterPath = movie?.poster_path || '';
-    // const overview = movie?.overview || '';
-
-    const stmt = datab.prepare(
-      'INSERT INTO movies (tmdb_id, title, year, poster, overview) VALUES (?, ?, ?, ?, ?)'
-    );
-//     console.log('Insert values:', {
-//   title,
-//   year,
-//   poster,
-//   overview,
-//   newYear,
-//   types: {
-//     title: typeof title,
-//     year: typeof year,
-//     poster: typeof poster,
-//     overview: typeof overview,
-//     newYear: typeof newYear,
-//   },
-// });
+    const stmt = datab.prepare('INSERT INTO movies (tmdb_id, title, year, poster, overview) VALUES (?, ?, ?, ?, ?)');
     const info = stmt.run(tmdb_id, title, Number(year), poster, overview);
     res.json({ success: true, id: info.lastInsertRowid });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'TMDb lookup failed' });
+    res.status(500).json({ success: false, message: 'Failed To Add Movie!' });
   }
 });
 
+//Delete Movie from local database
+app.delete('/api/movies/:id', async (req, res) => {
+  // const id = req.query.movieId as string;
+  const id = parseInt(req.params.id, 10);
 
-// Get all movies
-// app.get('/api/movies', (req, res) => {
-//   datab.all('SELECT * FROM movies', [], (err, rows) => {
-//     if (err) {
-//       console.error(err.message);
-//       return res.status(500).json({ success: false });
-//     }
-//     res.json({ success: true, data: rows });
-//   });
-// });
+  if(!id){
+    return res.status(400).json({ error: 'Invalid movie ID' });
+  }
+
+  try {
+    const stmt = datab.prepare('DELETE FROM movies WHERE id = ?');
+    const result = stmt.run(id);
+    res.status(200).json({ message: 'Movie deleted successfully' });
+  } catch (err) {
+    console.error('Failed to delete movie:', err);
+    res.status(500).json({ error: 'Failed to delete movie' });
+  }
+});
+
+//Get all movies
 app.get('/api/movies', (req, res) => {
   try {
     const rows = datab.prepare('SELECT * FROM movies').all();
@@ -102,61 +65,11 @@ app.get('/api/movies', (req, res) => {
   }
 });
 
-
-
-app.get('/api/tmdb/search', async (req: Request, res: Response): Promise<void> => {
-  const title = req.query.title;
-
-  if (!title || typeof title !== 'string') {
-    res.status(400).json({ error: 'Missing or invalid title' });
-    return;
-  }
-
-  try {
-    const results = await searchMovie(title);
-    res.json({ success: true, results });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: 'TMDb API failed' });
-  }
-});
-
-
-
-// app.get('/api/search-movies', async (req: Request, res: Response): Promise<void> => {
-//   const query = req.query.q as string;
-//   const source = req.query.source as 'tmdb' | 'local';
-
-//   if (!query) {
-//     res.status(400).json({ results: [] });
-//     return;
-//   }
-
-//   try {
-//     let results: any[] = [];
-
-//     if (source === 'tmdb') {
-//       const response = await searchMovie(query);
-//       const data = response.results;
-//       results = data.slice(0, 5);
-//     } else {
-//       const rows = datab.prepare('SELECT * FROM movies WHERE title LIKE ?').all(`%${query}%`);
-//       results = rows;
-//     }
-
-//     res.json({ results });
-//   } catch (err) {
-//     console.error('API search failed:', err);
-//     res.status(500).json({ results: [] }); // ✅ Always respond with valid JSON
-//   }
-// });
-
-
-
+//Used for search bars
 app.get('/api/search-movies', async (req: Request, res: Response): Promise<void> => {
-  const query = req.query.q as string;
-  const source = req.query.source as 'tmdb' | 'local';
-  const id = req.query.id as string;
+  const { q: query, source, id } = req.query as Record<string, string>;
+
+
   if (!query && !id) {
     res.status(400).json({ results: [] });
     return;
@@ -166,7 +79,7 @@ app.get('/api/search-movies', async (req: Request, res: Response): Promise<void>
     let results: any[] = [];
 
     if (source === 'tmdb') {
-      results = await searchMovieSuggestions(query); // ✅ new function here
+      results = await searchMovieSuggestions(query);
     } else {
       const rows = datab.prepare('SELECT * FROM movies WHERE id = ?').all(`${id}`);
       results = rows;
@@ -180,7 +93,8 @@ app.get('/api/search-movies', async (req: Request, res: Response): Promise<void>
   }
 });
 
-app.get('/api/preview-movie', async (req: Request, res: Response): Promise<void> => {
+//Gets local data for movie preview page
+app.get('/api/preview-movie/local', async (req: Request, res: Response): Promise<void> => {
   const id = req.query.id as string;
 
   if (!id) {
@@ -189,29 +103,40 @@ app.get('/api/preview-movie', async (req: Request, res: Response): Promise<void>
   }
 
   try {
-    const response = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
-      headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` }
-    });
+    let results: any[] = [];
+    const rows = datab.prepare('SELECT * FROM movies WHERE id = ?').all(`${id}`);
+    results = rows;
+    res.json({ results });
 
-    const movie = response.data;
-    // console.log(movie); // THIS IS WHERE I CONSOLE MOVIE +++++++++++++++++++++++++++++++++++++++++++++
-    // console.log("This is the id it is sending to the api: ", id, " versus movie.id: ", movie.id);
-    const localPosterPath = await downloadPoster(movie.poster_path, movie.id);
-
-    res.json({
-      id: movie.id,
-      tmdb_id: id,
-      title: movie.title,
-      year: movie.release_date?.substring(0, 4),
-      overview: movie.overview,
-      poster: localPosterPath,
-    });
   } catch (err) {
-    console.error('TMDb movie fetch failed:', err);
-    res.status(500).json({ error: 'Failed to fetch movie preview' });
+    console.error('Local movie fetch failed:', err);
+    res.status(500).json({ error: 'Failed to fetch movie preview from local' });
   }
 });
 
+//Gets data from tmdb for movie preview page
+app.get('/api/preview-movie/tmdb', async (req: Request, res: Response): Promise<void> => {
+  const id = req.query.id as string;
+
+  try {
+    const movie = await searchMovie(id);
+    console.log("THIS IS MY SERVER MOVIE")
+    res.json({
+      id: movie.id,
+      title: movie.title,
+      year: movie.release_date?.substring(0, 4),
+      overview: movie.overview,
+      poster: movie.poster,
+      backdrop: movie.backdrop,
+    });
+  } catch (err) {
+    console.error('TMDb movie fetch failed:', err);
+    res.status(500).json({ error: 'Failed to fetch movie preview from tmdb' });
+  }
+});
+
+
+//Get reviews
 app.get('/api/reviews', async (req: Request, res: Response): Promise<void> => {
   const id = req.query.movieId as string;
 
@@ -233,6 +158,7 @@ app.get('/api/reviews', async (req: Request, res: Response): Promise<void> => {
 
 });
 
+//Add review
 app.post('/api/reviews', async (req: Request, res: Response): Promise<void> => {
   console.log("WE IN HERE");
   const { comment, movieId, profileId, rating  } = req.body;
@@ -252,6 +178,30 @@ app.post('/api/reviews', async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ success: false, message: 'Failed to add review' });
   }
 });
+
+//Delete review
+app.delete('/api/reviews/:id', async (req, res) => {
+  const reviewId = parseInt(req.params.id, 10);
+
+  if (isNaN(reviewId)) {
+    return res.status(400).json({ error: 'Invalid review ID' });
+  }
+
+  try {
+    const stmt = datab.prepare('DELETE FROM reviews WHERE id = ?');
+    const result = stmt.run(reviewId);
+
+    if (result.changes > 0) {
+      res.status(200).json({ message: 'Review deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Review not found' });
+    }
+  } catch (err) {
+    console.error('Failed to delete review:', err);
+    res.status(500).json({ error: 'Failed to delete review' });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);

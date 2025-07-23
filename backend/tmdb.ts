@@ -14,6 +14,8 @@ interface MovieResult {
   overview: string;
   poster_path: string;
   id: number;
+  release_date: string;
+  backdrop_path: string;
 }
 
 interface MovieResponse {
@@ -21,6 +23,8 @@ interface MovieResponse {
   overview: string;
   poster: string;
   id: number;
+  release_date: string;
+  backdrop: string;
 }
 
 export interface MovieSuggestion {
@@ -29,14 +33,25 @@ export interface MovieSuggestion {
   year: string;
 }
 
-// async function downloadPoster(posterPath: string) {
+// export async function downloadPoster(imagePath: string, movieId: number, isPoster: boolean): Promise<string> {
 //   const baseUrl = 'https://image.tmdb.org/t/p/w500';
-//   const url = `${baseUrl}${posterPath}`;
-//   const fileName = posterPath.replace('/', ''); // remove leading slash
-//   const filePath = path.resolve(__dirname, 'public/posters', fileName);
-
+//   const url = `${baseUrl}${imagePath}`;
+//   const posterDir = path.join(process.cwd(), 'public', 'posters');
+//   let filePath: string;
+//   if (!fs.existsSync(posterDir)) {
+//     fs.mkdirSync(posterDir, { recursive: true });
+//   }
+//   console.log("below the issue?2")
+//   if(isPoster){
+//     filePath = path.join(posterDir, `${movieId}.jpg`);
+//   }
+//   else{
+//     filePath = path.join(posterDir, `${movieId}1.jpg`);
+//   }
+//   //const filePath = path.join(posterDir, `${movieId}.jpg`);
+//   console.log("below the issue?3")
 //   const writer = fs.createWriteStream(filePath);
-
+//   console.log("below the issue?4")
 //   const response = await axios({
 //     url,
 //     method: 'GET',
@@ -46,76 +61,83 @@ export interface MovieSuggestion {
 //   response.data.pipe(writer);
 
 //   return new Promise((resolve, reject) => {
-//     writer.on('finish', () => resolve(fileName));
+//     if(isPoster){
+//       writer.on('finish', () => resolve(`/posters/${movieId}.jpg`));
+//     }
+//     else{
+//       writer.on('finish', () => resolve(`/posters/${movieId}1.jpg`));
+//     }
+//     // writer.on('finish', () => resolve(`/posters/${movieId}.jpg`));
 //     writer.on('error', reject);
 //   });
 // }
-export async function downloadPoster(imagePath: string, movieId: number): Promise<string> {
-  const baseUrl = 'https://image.tmdb.org/t/p/w500';
-  const url = `${baseUrl}${imagePath}`;
+
+export async function downloadMovieImages(
+  posterPath: string,
+  backdropPath: string,
+  movieId: number
+): Promise<{ poster: string; backdrop: string }> {
+  const basePosterUrl = 'https://image.tmdb.org/t/p/w500';
+  const baseBackdropUrl = 'https://image.tmdb.org/t/p/w1280'; // Higher quality for backdrops
   const posterDir = path.join(process.cwd(), 'public', 'posters');
 
   if (!fs.existsSync(posterDir)) {
     fs.mkdirSync(posterDir, { recursive: true });
   }
 
-  const filePath = path.join(posterDir, `${movieId}.jpg`);
-  const writer = fs.createWriteStream(filePath);
+  // Helper function to download a single image
+  const downloadImage = async (url: string, fileName: string): Promise<string> => {
+    const filePath = path.join(posterDir, fileName);
+    const writer = fs.createWriteStream(filePath);
 
-  const response = await axios({
-    url,
-    method: 'GET',
-    responseType: 'stream',
-  });
+    const response = await axios({
+      url,
+      method: 'GET',
+      responseType: 'stream',
+    });
 
-  response.data.pipe(writer);
+    response.data.pipe(writer);
 
-  return new Promise((resolve, reject) => {
-    writer.on('finish', () => resolve(`/posters/${movieId}.jpg`));
-    writer.on('error', reject);
-  });
+    return new Promise((resolve, reject) => {
+      writer.on('finish', () => resolve(`/posters/${fileName}`));
+      writer.on('error', reject);
+    });
+  };
+
+  // Download poster and backdrop in parallel
+  const [poster, backdrop] = await Promise.all([
+    downloadImage(`${basePosterUrl}${posterPath}`, `${movieId}.jpg`),
+    downloadImage(`${baseBackdropUrl}${backdropPath}`, `${movieId}-backdrop.jpg`),
+  ]);
+
+  return { poster, backdrop };
 }
-// export async function searchMovie(title: string) {
-//   try {
-//     console.log("API KEY 2: ", API_KEY);
-//     const response = await axios.get(`https://api.themoviedb.org/3/search/movie`, {
-//       headers: {
-//         Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`
-//       },
-//       params: {
-//         //api_key: API_KEY,
-//         query: title
-//       }
-//     });
-//     return response.data.results;
-//   } catch (err) {
-//     console.error('TMDb search error:', err);
-//     throw err;
-//   }
-// }
-export async function searchMovie(query: string): Promise<MovieResponse> {
-  
-  const response = await axios.get('https://api.themoviedb.org/3/search/movie', {
-    headers: {
-      Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
-    },
-    params: {
-      query,
-    },
-  });
 
-  const movie: MovieResult = response.data.results[0];
+export async function searchMovie(id: string): Promise<MovieResponse> {
+  
+  const response = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
+    headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` }
+  });
+  console.log(response);
+  const movie: MovieResult = response.data; //.results[0]
   if (!movie) {
     throw new Error('Movie not found');
   }
+  // const yesPoster = true;
+  // console.log("below the issue?")
+  // const localPosterPath = await downloadPoster(movie.poster_path, movie.id, yesPoster);
+  // console.log("i make it past the issue?")
+  // const localBackdropPath = await downloadPoster(movie.backdrop_path, movie.id, !yesPoster);
 
-  const localPosterPath = await downloadPoster(movie.poster_path, movie.id);
+  const { poster, backdrop } = await downloadMovieImages(movie.poster_path, movie.backdrop_path, movie.id);
 
   return {
     title: movie.title,
     overview: movie.overview,
-    poster: localPosterPath,
+    poster: poster,
+    backdrop: backdrop,
     id: movie.id,
+    release_date: movie.release_date,
   };
 }
 

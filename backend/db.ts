@@ -1,7 +1,10 @@
-// db.ts
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const dataDir = path.resolve(__dirname, '../data');
 if (!fs.existsSync(dataDir)) {
@@ -9,7 +12,6 @@ if (!fs.existsSync(dataDir)) {
 }
 
 const dbPath = path.resolve(__dirname, '../data/movies.db');
-// const databInstance = new Database(dbPath);
 export const datab: InstanceType<typeof Database> = new Database(dbPath);
 
 // Create table (runs once)

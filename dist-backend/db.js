@@ -1,22 +1,17 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.datab = void 0;
-// db.ts
-const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
-const dataDir = path_1.default.resolve(__dirname, '../data');
-if (!fs_1.default.existsSync(dataDir)) {
-    fs_1.default.mkdirSync(dataDir);
+import Database from 'better-sqlite3';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dataDir = path.resolve(__dirname, '../data');
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
 }
-const dbPath = path_1.default.resolve(__dirname, '../data/movies.db');
-// const databInstance = new Database(dbPath);
-exports.datab = new better_sqlite3_1.default(dbPath);
+const dbPath = path.resolve(__dirname, '../data/movies.db');
+export const datab = new Database(dbPath);
 // Create table (runs once)
-exports.datab.exec(`
+datab.exec(`
   CREATE TABLE IF NOT EXISTS movies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tmdb_id INTEGER NOT NULL,
@@ -43,8 +38,8 @@ exports.datab.exec(`
     FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
   );
 `);
-const existingProfiles = exports.datab.prepare('SELECT COUNT(*) as count FROM profiles').get();
+const existingProfiles = datab.prepare('SELECT COUNT(*) as count FROM profiles').get();
 if (existingProfiles.count === 0) {
-    exports.datab.prepare('INSERT INTO profiles (name) VALUES (?)').run('Test User');
+    datab.prepare('INSERT INTO profiles (name) VALUES (?)').run('Test User');
     console.log('👤 Inserted mock profile: "Test User"');
 }

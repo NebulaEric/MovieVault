@@ -12,11 +12,10 @@
 }
 
 .modal {
-  background: rgb(95, 91, 91);
+  background: rgb(0, 0, 0, 0);
   padding: 2rem;
   border-radius: 8px;
   min-width: 300px;
-  max-width: 500px;
   position: relative;
 }
 
@@ -24,7 +23,7 @@
   position: absolute;
   top: 0.5rem;
   right: 0.75rem;
-  font-size: 1.5rem;
+  font-size: 2.5rem;
   background: none;
   border: none;
   cursor: pointer;

@@ -1,4 +1,9 @@
 @import "tailwindcss";
+
+@tailwind base;
+@tailwind component;
+@tailwind utilities;
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -6,7 +11,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #09090b;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,7 +19,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
+/* a {
   font-weight: 500;
   color: #646cff;
   text-decoration: inherit;
@@ -30,7 +35,7 @@ body {
   display: flex;
   place-items: center;
   /* min-width: 320px;
-  min-height: 100vh; */
+  min-height: 100vh; 
 }
 
 h1 {
@@ -68,4 +73,4 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
-}
+} */

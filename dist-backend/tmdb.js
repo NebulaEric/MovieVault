@@ -1,25 +1,30 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.downloadPoster = downloadPoster;
-exports.searchMovie = searchMovie;
-exports.searchMovieSuggestions = searchMovieSuggestions;
 // backend/tmdb.ts
-const axios_1 = __importDefault(require("axios"));
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
 const API_KEY = process.env.TMDB_API_KEY; // Load from .env in production
 const BASE_URL = 'https://api.themoviedb.org/3';
-// async function downloadPoster(posterPath: string) {
+// export async function downloadPoster(imagePath: string, movieId: number, isPoster: boolean): Promise<string> {
 //   const baseUrl = 'https://image.tmdb.org/t/p/w500';
-//   const url = `${baseUrl}${posterPath}`;
-//   const fileName = posterPath.replace('/', ''); // remove leading slash
-//   const filePath = path.resolve(__dirname, 'public/posters', fileName);
+//   const url = `${baseUrl}${imagePath}`;
+//   const posterDir = path.join(process.cwd(), 'public', 'posters');
+//   let filePath: string;
+//   if (!fs.existsSync(posterDir)) {
+//     fs.mkdirSync(posterDir, { recursive: true });
+//   }
+//   console.log("below the issue?2")
+//   if(isPoster){
+//     filePath = path.join(posterDir, `${movieId}.jpg`);
+//   }
+//   else{
+//     filePath = path.join(posterDir, `${movieId}1.jpg`);
+//   }
+//   //const filePath = path.join(posterDir, `${movieId}.jpg`);
+//   console.log("below the issue?3")
 //   const writer = fs.createWriteStream(filePath);
+//   console.log("below the issue?4")
 //   const response = await axios({
 //     url,
 //     method: 'GET',
@@ -27,71 +32,71 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 //   });
 //   response.data.pipe(writer);
 //   return new Promise((resolve, reject) => {
-//     writer.on('finish', () => resolve(fileName));
+//     if(isPoster){
+//       writer.on('finish', () => resolve(`/posters/${movieId}.jpg`));
+//     }
+//     else{
+//       writer.on('finish', () => resolve(`/posters/${movieId}1.jpg`));
+//     }
+//     // writer.on('finish', () => resolve(`/posters/${movieId}.jpg`));
 //     writer.on('error', reject);
 //   });
 // }
-async function downloadPoster(imagePath, movieId) {
-    const baseUrl = 'https://image.tmdb.org/t/p/w500';
-    const url = `${baseUrl}${imagePath}`;
-    const posterDir = path_1.default.join(process.cwd(), 'public', 'posters');
-    if (!fs_1.default.existsSync(posterDir)) {
-        fs_1.default.mkdirSync(posterDir, { recursive: true });
+export async function downloadMovieImages(posterPath, backdropPath, movieId) {
+    const basePosterUrl = 'https://image.tmdb.org/t/p/w500';
+    const baseBackdropUrl = 'https://image.tmdb.org/t/p/w1280'; // Higher quality for backdrops
+    const posterDir = path.join(process.cwd(), 'public', 'posters');
+    if (!fs.existsSync(posterDir)) {
+        fs.mkdirSync(posterDir, { recursive: true });
     }
-    const filePath = path_1.default.join(posterDir, `${movieId}.jpg`);
-    const writer = fs_1.default.createWriteStream(filePath);
-    const response = await (0, axios_1.default)({
-        url,
-        method: 'GET',
-        responseType: 'stream',
-    });
-    response.data.pipe(writer);
-    return new Promise((resolve, reject) => {
-        writer.on('finish', () => resolve(`/posters/${movieId}.jpg`));
-        writer.on('error', reject);
-    });
+    // Helper function to download a single image
+    const downloadImage = async (url, fileName) => {
+        const filePath = path.join(posterDir, fileName);
+        const writer = fs.createWriteStream(filePath);
+        const response = await axios({
+            url,
+            method: 'GET',
+            responseType: 'stream',
+        });
+        response.data.pipe(writer);
+        return new Promise((resolve, reject) => {
+            writer.on('finish', () => resolve(`/posters/${fileName}`));
+            writer.on('error', reject);
+        });
+    };
+    // Download poster and backdrop in parallel
+    const [poster, backdrop] = await Promise.all([
+        downloadImage(`${basePosterUrl}${posterPath}`, `${movieId}.jpg`),
+        downloadImage(`${baseBackdropUrl}${backdropPath}`, `${movieId}-backdrop.jpg`),
+    ]);
+    return { poster, backdrop };
 }
-// export async function searchMovie(title: string) {
-//   try {
-//     console.log("API KEY 2: ", API_KEY);
-//     const response = await axios.get(`https://api.themoviedb.org/3/search/movie`, {
-//       headers: {
-//         Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`
-//       },
-//       params: {
-//         //api_key: API_KEY,
-//         query: title
-//       }
-//     });
-//     return response.data.results;
-//   } catch (err) {
-//     console.error('TMDb search error:', err);
-//     throw err;
-//   }
-// }
-async function searchMovie(query) {
-    const response = await axios_1.default.get('https://api.themoviedb.org/3/search/movie', {
-        headers: {
-            Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
-        },
-        params: {
-            query,
-        },
+export async function searchMovie(id) {
+    const response = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
+        headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` }
     });
-    const movie = response.data.results[0];
+    console.log(response);
+    const movie = response.data; //.results[0]
     if (!movie) {
         throw new Error('Movie not found');
     }
-    const localPosterPath = await downloadPoster(movie.poster_path, movie.id);
+    // const yesPoster = true;
+    // console.log("below the issue?")
+    // const localPosterPath = await downloadPoster(movie.poster_path, movie.id, yesPoster);
+    // console.log("i make it past the issue?")
+    // const localBackdropPath = await downloadPoster(movie.backdrop_path, movie.id, !yesPoster);
+    const { poster, backdrop } = await downloadMovieImages(movie.poster_path, movie.backdrop_path, movie.id);
     return {
         title: movie.title,
         overview: movie.overview,
-        poster: localPosterPath,
+        poster: poster,
+        backdrop: backdrop,
         id: movie.id,
+        release_date: movie.release_date,
     };
 }
-async function searchMovieSuggestions(query) {
-    const response = await axios_1.default.get('https://api.themoviedb.org/3/search/movie', {
+export async function searchMovieSuggestions(query) {
+    const response = await axios.get('https://api.themoviedb.org/3/search/movie', {
         headers: {
             Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
         },
