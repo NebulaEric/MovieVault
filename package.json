@@ -5,7 +5,7 @@
   "main": "./dist-electron/main.js",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n \"VITE,ELECTRON,TSC,EXPRESS\" -c \"cyan,green,magenta,yellow\" \"vite\" \"npm:electron-dev\" \"npm:tsc-watch\" \"npm:express-dev\"",
+    "dev": "concurrently -k -n \"ELECTRON,VITE,TSC,EXPRESS\" -c \"cyan,green,magenta,yellow\" \"npm:electron-dev\" \"vite\"  \"npm:tsc-watch\" \"npm:express-dev\"",
     "tsc-watch": "concurrently \"tsc --project backend/tsconfig.json --watch\" \"tsc --project electron/tsconfig.json --watch\"",
     "electron-dev": "wait-on http://localhost:5173 && electron .",
     "build": "vite build && tsc -p electron/tsconfig.json",

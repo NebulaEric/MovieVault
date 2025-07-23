@@ -1,13 +1,8 @@
-// backend/tmdb.ts
 import axios from 'axios';
-import React, { useState, useEffect } from 'react';
-import debounce from 'lodash.debounce';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config();
-const API_KEY = process.env.TMDB_API_KEY; // Load from .env in production
-const BASE_URL = 'https://api.themoviedb.org/3';
 
 interface MovieResult {
   title: string;
@@ -33,59 +28,16 @@ export interface MovieSuggestion {
   year: string;
 }
 
-// export async function downloadPoster(imagePath: string, movieId: number, isPoster: boolean): Promise<string> {
-//   const baseUrl = 'https://image.tmdb.org/t/p/w500';
-//   const url = `${baseUrl}${imagePath}`;
-//   const posterDir = path.join(process.cwd(), 'public', 'posters');
-//   let filePath: string;
-//   if (!fs.existsSync(posterDir)) {
-//     fs.mkdirSync(posterDir, { recursive: true });
-//   }
-//   console.log("below the issue?2")
-//   if(isPoster){
-//     filePath = path.join(posterDir, `${movieId}.jpg`);
-//   }
-//   else{
-//     filePath = path.join(posterDir, `${movieId}1.jpg`);
-//   }
-//   //const filePath = path.join(posterDir, `${movieId}.jpg`);
-//   console.log("below the issue?3")
-//   const writer = fs.createWriteStream(filePath);
-//   console.log("below the issue?4")
-//   const response = await axios({
-//     url,
-//     method: 'GET',
-//     responseType: 'stream',
-//   });
-
-//   response.data.pipe(writer);
-
-//   return new Promise((resolve, reject) => {
-//     if(isPoster){
-//       writer.on('finish', () => resolve(`/posters/${movieId}.jpg`));
-//     }
-//     else{
-//       writer.on('finish', () => resolve(`/posters/${movieId}1.jpg`));
-//     }
-//     // writer.on('finish', () => resolve(`/posters/${movieId}.jpg`));
-//     writer.on('error', reject);
-//   });
-// }
-
-export async function downloadMovieImages(
-  posterPath: string,
-  backdropPath: string,
-  movieId: number
-): Promise<{ poster: string; backdrop: string }> {
+//download both backdrop and poster
+export async function downloadMovieImages(posterPath: string, backdropPath: string, movieId: number): Promise<{ poster: string; backdrop: string }> {
   const basePosterUrl = 'https://image.tmdb.org/t/p/w500';
-  const baseBackdropUrl = 'https://image.tmdb.org/t/p/w1280'; // Higher quality for backdrops
+  const baseBackdropUrl = 'https://image.tmdb.org/t/p/w1280';
   const posterDir = path.join(process.cwd(), 'public', 'posters');
 
   if (!fs.existsSync(posterDir)) {
     fs.mkdirSync(posterDir, { recursive: true });
   }
 
-  // Helper function to download a single image
   const downloadImage = async (url: string, fileName: string): Promise<string> => {
     const filePath = path.join(posterDir, fileName);
     const writer = fs.createWriteStream(filePath);
@@ -104,7 +56,6 @@ export async function downloadMovieImages(
     });
   };
 
-  // Download poster and backdrop in parallel
   const [poster, backdrop] = await Promise.all([
     downloadImage(`${basePosterUrl}${posterPath}`, `${movieId}.jpg`),
     downloadImage(`${baseBackdropUrl}${backdropPath}`, `${movieId}-backdrop.jpg`),
@@ -113,21 +64,17 @@ export async function downloadMovieImages(
   return { poster, backdrop };
 }
 
+//get information for movie from tmdb
 export async function searchMovie(id: string): Promise<MovieResponse> {
   
   const response = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
     headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` }
   });
-  console.log(response);
-  const movie: MovieResult = response.data; //.results[0]
+
+  const movie: MovieResult = response.data;
   if (!movie) {
     throw new Error('Movie not found');
   }
-  // const yesPoster = true;
-  // console.log("below the issue?")
-  // const localPosterPath = await downloadPoster(movie.poster_path, movie.id, yesPoster);
-  // console.log("i make it past the issue?")
-  // const localBackdropPath = await downloadPoster(movie.backdrop_path, movie.id, !yesPoster);
 
   const { poster, backdrop } = await downloadMovieImages(movie.poster_path, movie.backdrop_path, movie.id);
 
@@ -141,7 +88,7 @@ export async function searchMovie(id: string): Promise<MovieResponse> {
   };
 }
 
-
+//getting the top 5 movies from a search query
 export async function searchMovieSuggestions(query: string): Promise<MovieSuggestion[]> {
   const response = await axios.get('https://api.themoviedb.org/3/search/movie', {
     headers: {
@@ -153,8 +100,6 @@ export async function searchMovieSuggestions(query: string): Promise<MovieSugges
   });
 
   const results = response.data.results as any[];
-
-  // Take top 5, and extract only id, title, and year
   return results.slice(0, 5).map(movie => ({
     id: movie.id,
     title: movie.title,

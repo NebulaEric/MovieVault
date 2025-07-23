@@ -18,6 +18,7 @@ datab.exec(`
     title TEXT NOT NULL,
     year INTEGER NOT NULL,
     poster TEXT,
+    backdrop TEXT,
     overview TEXT
   );
 

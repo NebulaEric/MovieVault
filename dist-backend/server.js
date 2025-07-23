@@ -12,14 +12,14 @@ app.use(express.json());
 app.use('/posters', express.static(path.join(process.cwd(), 'public', 'posters')));
 //Post Movie to local database
 app.post('/api/movies', async (req, res) => {
-    const { tmdb_id, title, year, poster, overview } = req.body;
+    const { tmdb_id, title, year, poster, overview, backdrop } = req.body;
     if (!title) {
         res.status(400).json({ success: false, message: 'Missing Movie Data' });
         return;
     }
     try {
-        const stmt = datab.prepare('INSERT INTO movies (tmdb_id, title, year, poster, overview) VALUES (?, ?, ?, ?, ?)');
-        const info = stmt.run(tmdb_id, title, Number(year), poster, overview);
+        const stmt = datab.prepare('INSERT INTO movies (tmdb_id, title, year, poster, overview, backdrop) VALUES (?, ?, ?, ?, ?, ?)');
+        const info = stmt.run(tmdb_id, title, Number(year), poster, overview, backdrop);
         res.json({ success: true, id: info.lastInsertRowid });
     }
     catch (err) {
@@ -29,7 +29,6 @@ app.post('/api/movies', async (req, res) => {
 });
 //Delete Movie from local database
 app.delete('/api/movies/:id', async (req, res) => {
-    // const id = req.query.movieId as string;
     const id = parseInt(req.params.id, 10);
     if (!id) {
         return res.status(400).json({ error: 'Invalid movie ID' });
@@ -102,7 +101,6 @@ app.get('/api/preview-movie/tmdb', async (req, res) => {
     const id = req.query.id;
     try {
         const movie = await searchMovie(id);
-        console.log("THIS IS MY SERVER MOVIE");
         res.json({
             id: movie.id,
             title: movie.title,
