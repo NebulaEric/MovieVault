@@ -1,6 +1,5 @@
 import React from "react"
 import profileLogo from '/src/assets/EW.png'
-import '@/styles/Home.css'
 import { useState, useEffect } from 'react'
 import { Outlet } from "react-router-dom"
 import  Modal  from './Modal';
@@ -17,6 +16,7 @@ interface Movie {
   id: number;
   year: number;
   tmdb_id: number;
+  media_type: string;
 }
 
 export const Home: React.FC = () => {
@@ -81,7 +81,7 @@ export const Home: React.FC = () => {
               source="tmdb"
               onMovieSelect={(movie) => {
                 setIsModalOpen(false);
-                navigate(`/preview/${movie.id}/tmdb`);
+                navigate(`/preview/${movie.media_type}/${movie.id}/tmdb`);
               }}
             />
           </Modal>
@@ -93,8 +93,8 @@ export const Home: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 p-6">
         {movies.map((movie) => (
           <Link
-            to={`/preview/${movie.id}/local`}
-            key={movie.id}
+            to={`/preview/${movie.media_type}/${movie.tmdb_id}/local`}
+            key={movie.tmdb_id}
             className="bg-[#09090b] rounded-2xl shadow-sm shadow-gray-600 hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200"
           >
             {/* Poster */}

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import profileLogo from '/src/assets/EW.png'
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ interface Movie {
   overview: string;
   poster: string;
   backdrop: string;
+  actors: any[];
 }
 
 interface Review {
@@ -31,6 +32,8 @@ export default function LibraryPreviewPage() {
   const [newRating, setNewRating] = useState<number>(5);
   const [newComment, setNewComment] = useState('');
   const [isInLibrary, setIsInLibrary] = useState(false);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [isTogglingWatchlist, setIsTogglingWatchlist] = useState(false);
   const navigate = useNavigate();
   const notifyAdd = () => toast('🎉 Movie added to your library!', {
     position: "top-center",
@@ -65,15 +68,19 @@ export default function LibraryPreviewPage() {
   //Fetch Movie Details Function
   async function fetchMovieDetails() {
       try {
-        if (source == 'local'){
-          const localRes = await fetch(`/api/preview-movie/local?id=${id}`);
+        const localRes = await fetch(`/api/preview-movie/local?id=${id}`); 
+        
+        if (source == 'local' || localRes.ok){
+          // const localRes = await fetch(`/api/preview-movie/local?id=${id}`);
           const localData = await localRes.json();
-          setMovie(localData.results[0]);
+          
+          setMovie(localData);
           setIsInLibrary(true);
         }
         else{
           const previewRes = await fetch(`/api/preview-movie/tmdb?id=${id}`);
           const previewData = await previewRes.json();
+          console.log(previewData);
           setMovie(previewData);
           setIsInLibrary(false);
         }
@@ -81,6 +88,22 @@ export default function LibraryPreviewPage() {
         console.error('Failed to load movie preview:', err);
       }
     }
+
+  async function checkWatchlistStatus(tmdb_id: number) {
+  try {
+    const res = await fetch(`/api/watchlist/${tmdb_id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setIsInWatchlist(data.exists === true);
+    } else {
+      console.warn('Could not verify watchlist status');
+      setIsInWatchlist(false);
+    }
+  } catch (err) {
+    console.error('Error checking watchlist:', err);
+    setIsInWatchlist(false);
+  }
+}
   //Fetch Movie Details and Reviews
   useEffect(() => {
     if(id){
@@ -89,6 +112,11 @@ export default function LibraryPreviewPage() {
     }
   }, [id]);
 
+  useEffect(() => {
+  if (movie) {
+    checkWatchlistStatus(movie.id);
+  }
+}, [movie]);
   //Add Review Handler
   const handleReviewSubmit = async () => {
     const res = await fetch('/api/reviews', {
@@ -135,7 +163,7 @@ export default function LibraryPreviewPage() {
   <>
     <header>
       <nav className="bg-[#09090b] border-b border-gray-600 shadow-md sticky top-0 z-50">
-        <div className="mx-3 px-4 py-3 pr-12 flex items-center w-screen">
+        <div className="mx-3 px-4 py-3 pr-12 flex items-center w-full">
           <div className="flex items-center space-x-8">
             {/* Logo */}
             <a href="/" className="flex items-center gap-2 text-xl font-semibold text-white hover:text-blue-600">
@@ -164,9 +192,9 @@ export default function LibraryPreviewPage() {
   
   return (
   <>
-    <header>
-      <nav className="bg-[#09090b] border-b border-gray-600 shadow-md sticky top-0 z-50">
-        <div className="mx-3 px-4 py-3 pr-12 flex items-center w-screen">
+    <header className="fixed top-0 left-0 w-full z-[1000] bg-[#09090b] border-b border-gray-600 shadow-md">
+      <nav className="max-w-screen-xl mr-auto px-0 py-2 flex items-center justify-between">
+        <div className="mx-3 px-4 py-2 pr-12 flex items-center w-full">
           <div className="flex items-center space-x-8">
             {/* Logo */}
             <a href="/" className="flex items-center gap-2 text-xl font-semibold text-white hover:text-blue-600">
@@ -189,7 +217,7 @@ export default function LibraryPreviewPage() {
     </header>
     
     <main>
-      <div className="relative min-h-screen text-white bg-gray-900">
+      <div className="relative min-h-screen text-white bg-gray-900 overflow-x-hidden">
         {/* Backdrop */}
         <div
           className="absolute inset-0 bg-cover bg-center brightness-50"
@@ -197,7 +225,7 @@ export default function LibraryPreviewPage() {
         ></div>
 
         {/* Content Overlay */}
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-10">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-18">
           {/* Movie Info Section */}
           <div className="flex flex-col md:flex-row gap-8 bg-black/50 backdrop-blur-md p-6 rounded-xl shadow-lg">
             {/* Poster */}
@@ -215,7 +243,7 @@ export default function LibraryPreviewPage() {
               <p className="text-gray-300 text-lg leading-relaxed mb-6">{movie.overview}</p>
         
               {/* Action Buttons */}
-              <div className="flex gap-4 mr-15">
+              <div className="flex gap-4 mr-[3.75rem]">
                 <button
                   className={`px-5 py-2 rounded-lg font-semibold transition ${
                     isInLibrary
@@ -246,12 +274,21 @@ export default function LibraryPreviewPage() {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                              tmdb_id: movie.id,
-                              title: movie.title,
-                              year: movie.year,
-                              poster: movie.poster,
-                              backdrop: movie.backdrop,
-                              overview: movie.overview,
+                              movie: {
+                                tmdb_id: movie.id,
+                                title: movie.title,
+                                year: movie.year,
+                                poster: movie.poster,
+                                backdrop: movie.backdrop,
+                                overview: movie.overview,
+                              },
+                              actors: movie.actors.map(actor => ({
+                                id: actor.id,
+                                name: actor.name,
+                                character: actor.character,
+                                order: actor.order,
+                                profile_path: actor.profile_path
+                              }))
                             }),
                           });
 
@@ -259,7 +296,7 @@ export default function LibraryPreviewPage() {
                             notifyAdd();
                             const data = await res.json();
                             setIsInLibrary(true);
-                            navigate(`/preview/${data.id}/local`);
+                            navigate(`/preview/${movie.id}/local`);
                           } else {
                             alert('❌ Failed to add movie.');
                           }
@@ -272,13 +309,89 @@ export default function LibraryPreviewPage() {
                 >
                 {isInLibrary ? 'Remove from Library' : 'Add to Library'}
                 </button>
-                <ToastContainer />
-                <button className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-lg font-semibold transition">
-                  Watch Trailer
+                
+                <button
+                  className={`px-5 py-2 rounded-lg font-semibold transition ${
+                    isInWatchlist
+                      ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                      : 'bg-gray-700 hover:bg-yellow-500 text-white'
+                  }`}
+                  disabled={isTogglingWatchlist}
+                  onClick={async () => {
+                    if (!movie) return;
+                    setIsTogglingWatchlist(true);
+                    try {
+                      if (isInWatchlist) {
+                        // REMOVE from watchlist
+                        const res = await fetch(`/api/watchlist/${movie.id}`, {
+                          method: 'DELETE',
+                        });
+
+                        if (res.ok) {
+                          setIsInWatchlist(false);
+                        } else {
+                          alert('❌ Failed to remove from watchlist.');
+                        }
+                      } else {
+                        // ADD to watchlist
+                        const res = await fetch('/api/watchlist', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            movieId: movie.id,
+                            title: movie.title,
+                            year: movie.year,
+                            poster: movie.poster,
+                          }),
+                        });
+
+                        if (res.ok) {
+                          setIsInWatchlist(true);
+                        } else {
+                          alert('❌ Failed to add to watchlist.');
+                        }
+                      }
+                    } catch (err) {
+                      console.error('Error toggling watchlist:', err);
+                      alert('⚠️ Something went wrong');
+                    } finally {
+                      setIsTogglingWatchlist(false);
+                    }
+                  }}
+                >
+                  {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
                 </button>
+                <ToastContainer />
+                {/* <button className="bg-blue-500 hover:bg-blue-600 px-5 py-2 rounded-lg font-semibold transition">
+                  Watch Trailer
+                </button> */}
               </div>
             </div>
           </div>
+          
+          {/* Actors Section */}
+          {movie.actors?.length > 0 && (
+            <div className="mt-10 bg-black/40 backdrop-blur-md p-6 rounded-xl shadow-lg">
+              <h3 className="text-2xl font-bold mb-4">Actors</h3>
+              <div className="flex overflow-x-auto space-x-4 pb-2 scrollbar-hide">
+                {movie.actors.map((actor) => (
+                  <Link
+                    to={`/preview/person/${actor.id}/local`}
+                    key={actor.id}
+                    className="min-w-[120px] flex-shrink-0 flex flex-col items-center bg-gray-800/70 p-4 rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-shadow duration-300"
+                  >
+                    <img
+                      src={actor.profile_path || '/placeholder.png'}
+                      alt={actor.name}
+                      className="w-24 h-24 object-cover rounded-full mb-2"
+                    />
+                    <p className="text-white text-sm font-medium text-center">{actor.name}</p>
+                    <p className="text-gray-300 text-xs text-center">{actor.character}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Review Section */}
           <div className="mt-10 bg-black/40 backdrop-blur-md p-6 rounded-xl shadow-lg">
