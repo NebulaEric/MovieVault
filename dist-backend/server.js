@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { datab } from './db.js';
-import { searchMovie, tmdbSuggestions } from './tmdb.js';
+import { personBio, personCredits, searchMovie, tmdbSuggestions } from './tmdb.js';
 import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -249,6 +249,69 @@ app.get('/api/watchlist/:tmdb_id', async (req, res) => {
     catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to check watchlist' });
+    }
+});
+app.get('/api/preview-person', async (req, res) => {
+    const person_id = req.query.id;
+    if (!person_id) {
+        return res.status(400).json({ success: false, message: 'Missing person ID' });
+    }
+    try {
+        // console.log('Hello1 + ');
+        let data;
+        data = await datab.prepare('SELECT * FROM actors WHERE id = ?').get(person_id);
+        // const results = data
+        console.log('Hello1 + ', data);
+        if (data == undefined) {
+            data = await personBio(person_id);
+        }
+        else if (!data.bio) {
+            console.log('Hello2');
+            const bioData = await personBio(person_id);
+            console.log('Hello3');
+            data.bio = bioData.bio;
+            data.birthday = bioData.birthday;
+            data.place_of_birth = bioData.place_of_birth;
+        }
+        console.log('Hello4');
+        res.json(data);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch person' });
+    }
+});
+app.get('/api/person-movies', async (req, res) => {
+    const person_id = req.query.id;
+    if (!person_id) {
+        return res.status(400).json({ success: false, message: 'Missing person ID' });
+    }
+    try {
+        const tmdbCredits = await personCredits(person_id);
+        // const castData = await movie.json();
+        // const results = data
+        //console.log('This is what this is from', tmdbCredits);
+        const localMovies = datab.prepare('SELECT tmdb_id, poster FROM movies').all();
+        // console.log(localMovies)
+        const localMovieMap = new Map(localMovies.map(m => [m.tmdb_id, m.poster]));
+        // console.log(localMovieMap)
+        const inLibrary = tmdbCredits
+            .filter(credit => localMovieMap.has(credit.id))
+            .map(credit => ({
+            ...credit,
+            poster_path: localMovieMap.get(credit.id) || null,
+        }));
+        //console.log(inLibrary)
+        const notInLibrary = tmdbCredits.filter(credit => !localMovieMap.has(credit.id));
+        return res.json({
+            success: true,
+            inLibrary,
+            notInLibrary
+        });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch person' });
     }
 });
 app.listen(PORT, () => {

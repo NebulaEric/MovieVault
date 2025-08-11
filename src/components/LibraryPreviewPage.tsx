@@ -230,7 +230,7 @@ export default function LibraryPreviewPage() {
           <div className="flex flex-col md:flex-row gap-8 bg-black/50 backdrop-blur-md p-6 rounded-xl shadow-lg">
             {/* Poster */}
             <img
-              src={movie.poster}
+              src={movie.poster ? `${movie.poster}` : '/posters/NoPoster.png'}
               alt={movie.title}
               className="w-64 h-auto rounded-lg shadow-xl"
             />
@@ -296,6 +296,7 @@ export default function LibraryPreviewPage() {
                             notifyAdd();
                             const data = await res.json();
                             setIsInLibrary(true);
+                            console.log('This is the movie i want to print: ',movie);
                             navigate(`/preview/${movie.id}/local`);
                           } else {
                             alert('❌ Failed to add movie.');

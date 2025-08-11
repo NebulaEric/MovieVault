@@ -100,7 +100,7 @@ export const Home: React.FC = () => {
             {/* Poster */}
             <div className="aspect-[2/3] bg-gray-100">
               <img
-                src={movie.poster ? `${movie.poster}` : '/NoPoster.png'}
+                src={movie.poster ? `${movie.poster}` : '/posters/NoPoster.png'}
                 alt={movie.title}
                 className="w-full h-full object-cover"
               />
