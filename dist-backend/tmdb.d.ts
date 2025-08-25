@@ -1,11 +1,26 @@
-interface MovieResponse {
+interface MediaResponse {
+    original_name: string;
     title: string;
+    release_date: string | null;
     overview: string;
-    poster: string | null;
+    poster?: string | null;
     id: number;
-    release_date: string;
-    backdrop: string | null;
-    actors: any[];
+    first_air_date: string | null;
+    backdrop?: string | null;
+    media_type: string;
+    number_of_episodes?: number | null;
+    number_of_seasons?: number | null;
+    actors: Actor[];
+    seasons?: {
+        air_date: string | null;
+        episode_count: number;
+        id: number;
+        name: string;
+        overview: string;
+        poster: string | null;
+        season_number: number;
+        vote_average: number;
+    }[];
 }
 export interface MediaSuggestion {
     id: number;
@@ -26,8 +41,8 @@ interface Credit {
     media_type: string;
     release_date: string;
 }
-export declare function downloadMovieActors(movieId: number): Promise<Actor[]>;
-export declare function searchMovie(id: string): Promise<MovieResponse>;
+export declare function downloadMediaActors(mediaId: number, mediaType: 'movie' | 'tv'): Promise<Actor[]>;
+export declare function searchMedia(id: string, media_type: 'movie' | 'tv'): Promise<Partial<MediaResponse>>;
 export declare function tmdbSuggestions(query: string): Promise<MediaSuggestion[]>;
 export declare function personCredits(query: string): Promise<Credit[]>;
 export declare function personBio(query: string): Promise<{

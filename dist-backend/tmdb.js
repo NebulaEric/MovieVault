@@ -21,14 +21,19 @@ const downloadImage = async (url, fileName, subdirectory) => {
         writer.on('error', reject);
     });
 };
-export async function downloadMovieActors(movieId) {
-    const response = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}/credits`, {
+export async function downloadMediaActors(mediaId, mediaType) {
+    // Determine the correct TMDb endpoint
+    const endpoint = mediaType === 'movie'
+        ? `https://api.themoviedb.org/3/movie/${mediaId}/credits`
+        : `https://api.themoviedb.org/3/tv/${mediaId}/credits`;
+    const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` }
     });
     const cast = response.data.cast;
     if (!Array.isArray(cast)) {
         throw new Error('Invalid cast data');
     }
+    // Filter popular or main cast
     const filtered = cast.filter((actor) => actor.popularity > 1.0 || actor.order < 6);
     const actorResults = await Promise.all(filtered.map(async (actor) => {
         let localPath = null;
@@ -44,71 +49,76 @@ export async function downloadMovieActors(movieId) {
         return {
             id: actor.id,
             name: actor.name,
-            character: actor.character,
-            order: actor.order,
+            character: actor.character || actor.roles?.[0]?.character || '', // TV shows may have "roles" array
+            order: actor.order ?? 0,
             profile_path: localPath
         };
     }));
     return actorResults;
 }
 //get information for movie from tmdb
-//Should probably be called previewMovie
-export async function searchMovie(id) {
+export async function searchMedia(id, media_type) {
     const basePosterUrl = 'https://image.tmdb.org/t/p/w500';
     const baseBackdropUrl = 'https://image.tmdb.org/t/p/w1280';
-    const response = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
-        headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` }
-    });
-    const movie = response.data;
-    if (!movie) {
-        throw new Error('Movie not found');
+    let mediaData;
+    // Fetch data based on media type
+    if (media_type === 'movie') {
+        const response = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
+            headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` },
+        });
+        mediaData = response.data;
     }
-    // console.log("This is the movie information: ", movie);
-    // console.log("Movie Credits: ", credits)
-    //const { poster, backdrop } = await downloadMovieImages(movie.poster_path, movie.backdrop_path, movie.id);
-    if (movie.poster_path && movie.backdrop_path) {
+    else if (media_type === 'tv') {
+        const response = await axios.get(`https://api.themoviedb.org/3/tv/${id}`, {
+            headers: { Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}` },
+        });
+        mediaData = response.data;
     }
-    // const [poster, backdrop] = await Promise.all([
-    //   downloadImage(`${basePosterUrl}${movie.poster_path}`, `${movie.id}.jpg`, 'posters'),
-    //   downloadImage(`${baseBackdropUrl}${movie.backdrop_path}`, `${movie.id}-backdrop.jpg`, 'posters'),
-    // ]);
+    else {
+        throw new Error('Unsupported media type');
+    }
+    if (!mediaData) {
+        throw new Error(`${media_type === 'movie' ? 'Movie' : 'TV show'} not found`);
+    }
+    // Download images (poster + backdrop)
     const [poster, backdrop] = await Promise.all([
-        movie.poster_path
-            ? downloadImage(`${basePosterUrl}${movie.poster_path}`, `${movie.id}.jpg`, 'posters')
+        mediaData.poster_path
+            ? downloadImage(`${basePosterUrl}${mediaData.poster_path}`, `${mediaData.id}.jpg`, 'posters')
             : null,
-        movie.backdrop_path
-            ? downloadImage(`${baseBackdropUrl}${movie.backdrop_path}`, `${movie.id}-backdrop.jpg`, 'posters')
+        mediaData.backdrop_path
+            ? downloadImage(`${baseBackdropUrl}${mediaData.backdrop_path}`, `${mediaData.id}-backdrop.jpg`, 'posters')
             : null,
     ]);
-    const actors = await downloadMovieActors(movie.id);
-    // console.log("Movie Credits: ", actors)
+    // Download actors
+    const actors = await downloadMediaActors(mediaData.id, media_type); // maybe rename to downloadMediaActors if reused for TV
     return {
-        title: movie.title,
-        overview: movie.overview,
+        id: mediaData.id,
+        title: mediaData.title || mediaData.original_name,
+        overview: mediaData.overview,
         poster: poster,
         backdrop: backdrop,
-        id: movie.id,
-        release_date: movie.release_date,
+        release_date: mediaData.release_date || mediaData.first_air_date,
+        media_type: media_type,
         actors: actors,
+        ...(media_type === 'tv'
+            ? {
+                number_of_seasons: mediaData.number_of_seasons,
+                number_of_episodes: mediaData.number_of_episodes,
+                seasons: mediaData.seasons?.map((s) => ({
+                    air_date: s.air_date,
+                    episode_count: s.episode_count,
+                    id: s.id,
+                    name: s.name,
+                    overview: s.overview,
+                    poster: s.poster_path ?? null,
+                    season_number: s.season_number,
+                    vote_average: s.vote_average,
+                })),
+            }
+            : {}),
     };
 }
 //getting the top 5 movies from a search query
-// export async function tmdbSuggestions(query: string): Promise<MovieSuggestion[]> {
-//   const response = await axios.get('https://api.themoviedb.org/3/search/movie', {
-//     headers: {
-//       Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
-//     },
-//     params: {
-//       query,
-//     },
-//   });
-//   const results = response.data.results as any[];
-//   return results.slice(0, 5).map(movie => ({
-//     id: movie.id,
-//     title: movie.title,
-//     year: movie.release_date ? movie.release_date.split('-')[0] : 'Unknown',
-//   }));
-// }
 export async function tmdbSuggestions(query) {
     const response = await axios.get('https://api.themoviedb.org/3/search/multi', {
         headers: {
@@ -140,9 +150,6 @@ export async function personCredits(query) {
         headers: {
             Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
         },
-        // params: {
-        //   query,
-        // },
     });
     const results = response.data.cast;
     const selfRegex = /\bself\b/i;
@@ -184,31 +191,3 @@ export async function personBio(query) {
         profile_path: localPath,
     };
 }
-// const filtered = cast.filter((actor: any) => actor.popularity > 1.0 || actor.order < 6);
-// const actorResults: Actor[] = await Promise.all(
-//   filtered.map(async (actor: any) => {
-//     let localPath: string | null = null;
-//     if (actor.profile_path) {
-//       const imageUrl = `https://image.tmdb.org/t/p/w500${actor.profile_path}`;
-//       try {
-//         localPath = await downloadImage(imageUrl, `actor_${actor.id}.jpg`, 'actors');
-//       } catch (err) {
-//         console.warn(`Failed to download image for actor ${actor.name}:`, err);
-//       }
-//     }
-//     return {
-//       id: actor.id,
-//       name: actor.name,
-//       character: actor.character,
-//       order: actor.order,
-//       profile_path: localPath
-//     };
-//   })
-// );
-//   interface Credit {
-//   id: number;
-//   title: string;
-//   character: string;
-//   media_type: string;
-//   release_date: string;
-// }
